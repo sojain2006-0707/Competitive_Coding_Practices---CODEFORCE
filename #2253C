@@ -1,0 +1,110 @@
+import java.io.*;
+import java.util.*;
+
+public class Main {
+    static class FastScanner {
+        private final InputStream in = System.in;
+        private final byte[] buffer = new byte[1 << 16];
+        private int ptr = 0, len = 0;
+
+        private int read() throws IOException {
+            if (ptr >= len) {
+                len = in.read(buffer);
+                ptr = 0;
+                if (len <= 0) return -1;
+            }
+            return buffer[ptr++];
+        }
+
+        int nextInt() throws IOException {
+            int c;
+            do {
+                c = read();
+            } while (c <= ' ');
+
+            int sign = 1;
+            if (c == '-') {
+                sign = -1;
+                c = read();
+            }
+
+            int res = 0;
+            while (c > ' ') {
+                res = res * 10 + (c - '0');
+                c = read();
+            }
+            return res * sign;
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        FastScanner fs = new FastScanner();
+
+        int TestsNumT = fs.nextInt();
+        StringBuilder out = new StringBuilder();
+
+        while (TestsNumT-- > 0) {
+            int n = fs.nextInt();
+            int m = fs.nextInt();
+            int x = fs.nextInt();
+            int y = fs.nextInt();
+
+            int limit = n + m;
+
+            int[] a = new int[x];
+            int[] b = new int[y];
+
+            boolean[] inA = new boolean[limit + 1];
+            boolean[] inB = new boolean[limit + 1];
+
+            for (int i = 0; i < x; i++) {
+                a[i] = fs.nextInt();
+                inA[a[i]] = true;
+            }
+
+            for (int i = 0; i < y; i++) {
+                b[i] = fs.nextInt();
+                inB[b[i]] = true;
+            }
+
+            boolean[] possible = new boolean[limit + 1];
+
+            for (int v = 1; v <= limit; v++) {
+                if (inA[v] && inB[v]) {
+                    possible[v] = true;
+                }
+            }
+
+            int countA = 0;
+            for (int i = x - 1; i >= 0 && countA < n; i--) {
+                if (!inB[a[i]]) {
+                    possible[a[i]] = true;
+                    countA++;
+                }
+            }
+
+            int countB = 0;
+            for (int i = y - 1; i >= 0 && countB < m; i--) {
+                if (!inA[b[i]]) {
+                    possible[b[i]] = true;
+                    countB++;
+                }
+            }
+
+            int take = (n <= x && m <= y) ? n + m - 1 : n + m;
+
+            long answer = 0;
+
+            for (int v = limit; v >= 1 && take > 0; v--) {
+                if (possible[v]) {
+                    answer += v;
+                    take--;
+                }
+            }
+
+            out.append(answer).append('\n');
+        }
+
+        System.out.print(out);
+    }
+}
