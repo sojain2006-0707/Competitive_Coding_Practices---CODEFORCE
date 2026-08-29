@@ -1,0 +1,113 @@
+import java.io.*;
+
+public class Main {
+    static final long MOD = 1_000_000_007L;
+
+    static long solve(long n) {
+        long[][][] dp = new long[2][2][2];
+        dp[1][0][0] = 1;
+
+        for (int bit = 60; bit >= 0; bit--) {
+            long[][][] next = new long[2][2][2];
+            int nBit = (int) ((n >> bit) & 1L);
+
+            for (int tight = 0; tight < 2; tight++) {
+                for (int less = 0; less < 2; less++) {
+                    for (int need = 0; need < 2; need++) {
+                        long ways = dp[tight][less][need];
+
+                        if (ways == 0) {
+                            continue;
+                        }
+
+                        for (int aBit = 0; aBit <= 1; aBit++) {
+                            for (int cBit = 0; cBit <= 1; cBit++) {
+
+                                if (tight == 1 && cBit > nBit) {
+                                    continue;
+                                }
+
+                                if (less == 0 && aBit > cBit) {
+                                    continue;
+                                }
+
+                                if ((aBit & cBit) != need) {
+                                    continue;
+                                }
+
+                                int nextTight = (tight == 1 && cBit == nBit) ? 1 : 0;
+                                int nextLess = (less == 1 || aBit < cBit) ? 1 : 0;
+                                int nextNeed = aBit ^ cBit;
+
+                                next[nextTight][nextLess][nextNeed] += ways;
+
+                                if (next[nextTight][nextLess][nextNeed] >= MOD) {
+                                    next[nextTight][nextLess][nextNeed] -= MOD;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            dp = next;
+        }
+
+        return (dp[0][1][0] + dp[1][1][0]) % MOD;
+    }
+
+    public static void main(String[] args) throws Exception {
+        FastScanner fs = new FastScanner();
+        StringBuilder out = new StringBuilder();
+
+        int TestsNumT = fs.nextInt();
+
+        while (TestsNumT-- > 0) {
+            long n = fs.nextLong();
+            out.append(solve(n)).append('\n');
+        }
+
+        System.out.print(out);
+    }
+
+    static class FastScanner {
+        private final InputStream in = System.in;
+        private final byte[] buffer = new byte[1 << 16];
+        private int ptr = 0;
+        private int len = 0;
+
+        private int read() throws IOException {
+            if (ptr >= len) {
+                len = in.read(buffer);
+                ptr = 0;
+
+                if (len <= 0) {
+                    return -1;
+                }
+            }
+
+            return buffer[ptr++];
+        }
+
+        long nextLong() throws IOException {
+            int c;
+
+            do {
+                c = read();
+            } while (c <= ' ');
+
+            long result = 0;
+
+            while (c > ' ') {
+                result = result * 10 + (c - '0');
+                c = read();
+            }
+
+            return result;
+        }
+
+        int nextInt() throws IOException {
+            return (int) nextLong();
+        }
+    }
+}
