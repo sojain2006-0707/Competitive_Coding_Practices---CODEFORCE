@@ -1,0 +1,118 @@
+import java.io.*;
+
+public class Main {
+    static class FastScanner {
+        private final InputStream in = System.in;
+        private final byte[] buffer = new byte[1 << 16];
+        private int ptr = 0;
+        private int len = 0;
+
+        private int read() throws IOException {
+            if (ptr >= len) {
+                len = in.read(buffer);
+                ptr = 0;
+                if (len <= 0) {
+                    return -1;
+                }
+            }
+            return buffer[ptr++];
+        }
+
+        int nextInt() throws IOException {
+            int c;
+
+            do {
+                c = read();
+            } while (c <= ' ');
+
+            int result = 0;
+
+            while (c > ' ') {
+                result = result * 10 + (c - '0');
+                c = read();
+            }
+
+            return result;
+        }
+
+        String next() throws IOException {
+            int c;
+
+            do {
+                c = read();
+            } while (c <= ' ');
+
+            StringBuilder sb = new StringBuilder();
+
+            while (c > ' ') {
+                sb.append((char) c);
+                c = read();
+            }
+
+            return sb.toString();
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        FastScanner fs = new FastScanner();
+        StringBuilder out = new StringBuilder();
+
+        int TestsNumT = fs.nextInt();
+
+        while (TestsNumT-- > 0) {
+            int n = fs.nextInt();
+            String s = fs.next();
+
+            int totalInversionsParity = 0;
+            int ones = 0;
+            boolean alice = false;
+
+            for (int i = 0; i < n; i++) {
+                if (s.charAt(i) == '1') {
+                    ones++;
+                } else {
+                    if ((ones & 1) == 1) {
+                        totalInversionsParity ^= 1;
+                    }
+                }
+            }
+
+            if (totalInversionsParity == 1) {
+                out.append("Alice\n");
+                continue;
+            }
+
+            int suffixZeros = 0;
+
+            for (int i = n - 1; i >= 0; i--) {
+                if (s.charAt(i) == '0') {
+                    suffixZeros++;
+                } else {
+                    if ((suffixZeros & 1) == 1) {
+                        alice = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!alice) {
+                int prefixOnes = 0;
+
+                for (int i = 0; i < n; i++) {
+                    if (s.charAt(i) == '0') {
+                        if ((prefixOnes & 1) == 1) {
+                            alice = true;
+                            break;
+                        }
+                    } else {
+                        prefixOnes++;
+                    }
+                }
+            }
+
+            out.append(alice ? "Alice\n" : "Bob\n");
+        }
+
+        System.out.print(out);
+    }
+}
