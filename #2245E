@@ -1,0 +1,118 @@
+import java.io.*;
+
+public class Main {
+    static class FastScanner {
+        private final InputStream in = System.in;
+        private final byte[] buffer = new byte[1 << 16];
+        private int ptr = 0;
+        private int len = 0;
+
+        private int read() throws IOException {
+            if (ptr >= len) {
+                len = in.read(buffer);
+                ptr = 0;
+                if (len <= 0) return -1;
+            }
+            return buffer[ptr++];
+        }
+
+        int nextInt() throws IOException {
+            int c;
+            do {
+                c = read();
+            } while (c <= ' ');
+
+            int res = 0;
+            while (c > ' ') {
+                res = res * 10 + c - '0';
+                c = read();
+            }
+            return res;
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        FastScanner fs = new FastScanner();
+        StringBuilder out = new StringBuilder();
+
+        int TestsNumT = fs.nextInt();
+
+        while (TestsNumT-- > 0) {
+            int n = fs.nextInt();
+
+            int[] head = new int[n];
+            int[] to = new int[2 * (n - 1)];
+            int[] next = new int[2 * (n - 1)];
+            int[] degree = new int[n];
+
+            for (int i = 0; i < n; i++) {
+                head[i] = -1;
+            }
+
+            int edgeCnt = 0;
+
+            for (int i = 0; i < n - 1; i++) {
+                int u = fs.nextInt() - 1;
+                int v = fs.nextInt() - 1;
+
+                to[edgeCnt] = v;
+                next[edgeCnt] = head[u];
+                head[u] = edgeCnt++;
+
+                to[edgeCnt] = u;
+                next[edgeCnt] = head[v];
+                head[v] = edgeCnt++;
+
+                degree[u]++;
+                degree[v]++;
+            }
+
+            boolean[] visited = new boolean[n];
+            int[] stack = new int[n];
+
+            long ans = 0;
+
+            for (int start = 0; start < n; start++) {
+                if ((degree[start] & 1) != 0 || visited[start]) {
+                    continue;
+                }
+
+                int top = 0;
+                int c = 0;
+
+                stack[top++] = start;
+                visited[start] = true;
+
+                while (top > 0) {
+                    int u = stack[--top];
+
+                    for (int e = head[u]; e != -1; e = next[e]) {
+                        int v = to[e];
+
+                        if ((degree[v] & 1) != 0) {
+                            ans += c;
+                            c++;
+                        } else if (!visited[v]) {
+                            visited[v] = true;
+                            stack[top++] = v;
+                        }
+                    }
+                }
+            }
+
+            for (int u = 0; u < n; u++) {
+                for (int e = head[u]; e != -1; e = next[e]) {
+                    int v = to[e];
+
+                    if (u < v && (degree[u] & 1) != 0 && (degree[v] & 1) != 0) {
+                        ans++;
+                    }
+                }
+            }
+
+            out.append(ans).append('\n');
+        }
+
+        System.out.print(out);
+    }
+}
