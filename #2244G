@@ -1,0 +1,132 @@
+import java.io.*;
+import java.util.*;
+
+public class Main {
+    static class FastScanner {
+        private final InputStream in = System.in;
+        private final byte[] buffer = new byte[1 << 16];
+        private int ptr = 0;
+        private int len = 0;
+
+        private int read() throws IOException {
+            if (ptr >= len) {
+                len = in.read(buffer);
+                ptr = 0;
+                if (len <= 0) return -1;
+            }
+            return buffer[ptr++];
+        }
+
+        int nextInt() throws IOException {
+            int c;
+            do {
+                c = read();
+            } while (c <= ' ');
+
+            int res = 0;
+            while (c > ' ') {
+                res = res * 10 + c - '0';
+                c = read();
+            }
+            return res;
+        }
+
+        long nextLong() throws IOException {
+            int c;
+            do {
+                c = read();
+            } while (c <= ' ');
+
+            long res = 0;
+            while (c > ' ') {
+                res = res * 10 + c - '0';
+                c = read();
+            }
+            return res;
+        }
+    }
+
+    static class FenwickMax {
+        int n;
+        long[] tree;
+
+        FenwickMax(int n) {
+            this.n = n;
+            tree = new long[n + 1];
+        }
+
+        void update(int index, long value) {
+            while (index <= n) {
+                tree[index] = Math.max(tree[index], value);
+                index += index & -index;
+            }
+        }
+
+        long query(int index) {
+            long res = 0;
+            while (index > 0) {
+                res = Math.max(res, tree[index]);
+                index -= index & -index;
+            }
+            return res;
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        FastScanner fs = new FastScanner();
+        StringBuilder out = new StringBuilder();
+
+        int TestsNumT = fs.nextInt();
+
+        while (TestsNumT-- > 0) {
+            int n = fs.nextInt();
+
+            long[] a = new long[n];
+
+            @SuppressWarnings("unchecked")
+            ArrayList<Integer>[] events = new ArrayList[n + 1];
+
+            for (int i = 0; i < n; i++) {
+                a[i] = fs.nextLong();
+
+                long activate = i + a[i] + 1;
+
+                if (activate <= n) {
+                    int pos = (int) activate;
+                    if (events[pos] == null) {
+                        events[pos] = new ArrayList<>();
+                    }
+                    events[pos].add(i);
+                }
+            }
+
+            long[] dp = new long[n];
+            FenwickMax bit = new FenwickMax(n);
+
+            long answer = 0;
+
+            for (int j = 0; j < n; j++) {
+                if (events[j] != null) {
+                    for (int i : events[j]) {
+                        bit.update(i + 1, dp[i]);
+                    }
+                }
+
+                long limit = j - a[j];
+
+                long best = 0;
+
+                if (limit > 0) {
+                    best = bit.query((int) Math.min(limit, n));
+                }
+
+                dp[j] = best + a[j];
+                answer = Math.max(answer, dp[j]);
+            }
+
+            out.append(answer).append('\n');
+        }
+
+        System.out.print(out);
+    }
+}
