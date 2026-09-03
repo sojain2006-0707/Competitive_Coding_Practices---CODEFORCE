@@ -1,0 +1,88 @@
+import java.io.*;
+
+public class Main {
+    static class FastScanner {
+        private final InputStream in = System.in;
+        private final byte[] buffer = new byte[1 << 16];
+        private int ptr = 0;
+        private int len = 0;
+
+        private int read() throws IOException {
+            if (ptr >= len) {
+                len = in.read(buffer);
+                ptr = 0;
+                if (len <= 0) return -1;
+            }
+            return buffer[ptr++];
+        }
+
+        long nextLong() throws IOException {
+            int c;
+            do {
+                c = read();
+            } while (c <= ' ');
+
+            long res = 0;
+            while (c > ' ') {
+                res = res * 10 + (c - '0');
+                c = read();
+            }
+            return res;
+        }
+
+        int nextInt() throws IOException {
+            return (int) nextLong();
+        }
+    }
+
+    static String binary(long x) {
+        return Long.toBinaryString(x);
+    }
+
+    public static void main(String[] args) throws Exception {
+        FastScanner fs = new FastScanner();
+        StringBuilder out = new StringBuilder();
+
+        int TestsNumT = fs.nextInt();
+
+        while (TestsNumT-- > 0) {
+            long l = fs.nextLong();
+            long r = fs.nextLong();
+            int n = fs.nextInt();
+
+            int k = 63 - Long.numberOfLeadingZeros(r);
+
+            long x;
+            long y;
+
+            if (l >= (1L << k)) {
+                int p = k;
+
+                while (((l >> p) & 1L) == ((r >> p) & 1L)) {
+                    p--;
+                }
+
+                x = l;
+                y = l - (l & ((1L << p) - 1)) + (1L << p);
+            } else {
+                x = Math.max(l, 1L << (k - 1));
+                y = 1L << k;
+            }
+
+            String xb = binary(x);
+            String yb = binary(y);
+
+            StringBuilder ans = new StringBuilder(n);
+
+            for (int i = 0; i < n; i++) {
+                int a = xb.charAt(i % xb.length()) - '0';
+                int b = yb.charAt(i % yb.length()) - '0';
+                ans.append((char) ('0' + (a & b)));
+            }
+
+            out.append(ans).append('\n');
+        }
+
+        System.out.print(out);
+    }
+}
