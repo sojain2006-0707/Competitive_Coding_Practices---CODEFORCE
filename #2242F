@@ -1,0 +1,283 @@
+import java.io.*;
+import java.util.*;
+
+public class Main {
+    static final int MX = 200000;
+    static final int REBUILD_EVERY = 5000;
+
+    static int[] value = new int[1200000];
+    static int[] left = new int[1200000];
+    static int[] right = new int[1200000];
+    static int[] size = new int[1200000];
+    static int nodes = 0;
+
+    static long seed = 88172645463393265L;
+
+    static long rng() {
+        seed ^= seed << 7;
+        seed ^= seed >>> 9;
+        return seed;
+    }
+
+    static void ensure() {
+        if (nodes < value.length) return;
+
+        int cap = value.length << 1;
+        value = Arrays.copyOf(value, cap);
+        left = Arrays.copyOf(left, cap);
+        right = Arrays.copyOf(right, cap);
+        size = Arrays.copyOf(size, cap);
+    }
+
+    static int newNode(int v) {
+        ensure();
+        ++nodes;
+
+        value[nodes] = v;
+        left[nodes] = 0;
+        right[nodes] = 0;
+        size[nodes] = 1;
+
+        return nodes;
+    }
+
+    static int copyNode(int v) {
+        ensure();
+        ++nodes;
+
+        value[nodes] = value[v];
+        left[nodes] = left[v];
+        right[nodes] = right[v];
+        size[nodes] = size[v];
+
+        return nodes;
+    }
+
+    static int cnt(int v) {
+        return v == 0 ? 0 : size[v];
+    }
+
+    static void update(int v) {
+        if (v != 0) {
+            size[v] = 1 + cnt(left[v]) + cnt(right[v]);
+        }
+    }
+
+    static int merge(int a, int b) {
+        if (a == 0) return b;
+        if (b == 0) return a;
+
+        long total = (long) cnt(a) + cnt(b);
+        long random = Long.remainderUnsigned(rng(), total);
+
+        if (random < cnt(a)) {
+            int res = copyNode(a);
+            right[res] = merge(right[res], b);
+            update(res);
+            return res;
+        } else {
+            int res = copyNode(b);
+            left[res] = merge(a, left[res]);
+            update(res);
+            return res;
+        }
+    }
+
+    static int[] split(int root, int key) {
+        return split(root, key, 0);
+    }
+
+    static int[] split(int root, int key, int add) {
+        if (root == 0) {
+            return new int[]{0, 0};
+        }
+
+        int t = copyNode(root);
+        int curKey = add + cnt(left[t]);
+
+        if (key <= curKey) {
+            int[] p = split(left[t], key, add);
+
+            left[t] = p[1];
+            update(t);
+
+            return new int[]{p[0], t};
+        } else {
+            int[] p = split(
+                right[t],
+                key,
+                add + 1 + cnt(left[t])
+            );
+
+            right[t] = p[0];
+            update(t);
+
+            return new int[]{t, p[1]};
+        }
+    }
+
+    static int change(int x, int root) {
+        int[] p1 = split(root, x);
+        int[] p2 = split(p1[1], x);
+        int[] p3 = split(root, MX - x);
+
+        return merge(p2[0], p3[0]);
+    }
+
+    static int findFirst(int root) {
+        int v = root;
+
+        while (left[v] != 0) {
+            v = left[v];
+        }
+
+        return value[v];
+    }
+
+    static int buildBalanced(int l, int r) {
+        if (l >= r) {
+            return 0;
+        }
+
+        int mid = (l + r) >>> 1;
+
+        int v = newNode(mid);
+
+        left[v] = buildBalanced(l, mid);
+        right[v] = buildBalanced(mid + 1, r);
+
+        update(v);
+
+        return v;
+    }
+
+    static int rebuild(int root) {
+        int[] values = new int[MX];
+        int[] stack = new int[MX];
+
+        int count = 0;
+        int top = 0;
+        int cur = root;
+
+        while (cur != 0 || top > 0) {
+            while (cur != 0) {
+                stack[top++] = cur;
+                cur = left[cur];
+            }
+
+            cur = stack[--top];
+
+            values[count++] = value[cur];
+
+            cur = right[cur];
+        }
+
+        nodes = 0;
+
+        return buildFromValues(values, 0, count);
+    }
+
+    static int buildFromValues(int[] values, int l, int r) {
+        if (l >= r) {
+            return 0;
+        }
+
+        int mid = (l + r) >>> 1;
+
+        int v = newNode(values[mid]);
+
+        left[v] = buildFromValues(values, l, mid);
+        right[v] = buildFromValues(values, mid + 1, r);
+
+        update(v);
+
+        return v;
+    }
+
+    public static void main(String[] args) throws Exception {
+        FastScanner fs = new FastScanner(System.in);
+
+        int n = fs.nextInt();
+
+        int[] a = new int[n];
+
+        for (int i = 0; i < n; i++) {
+            a[i] = fs.nextInt();
+        }
+
+        int root = buildBalanced(0, MX);
+
+        int[] answer = new int[n];
+
+        int changed = 0;
+
+        for (int i = n - 1; i >= 0; i--) {
+            root = change(a[i], root);
+
+            answer[i] = findFirst(root);
+
+            changed++;
+
+            if (changed % REBUILD_EVERY == 0) {
+                root = rebuild(root);
+            }
+        }
+
+        StringBuilder out = new StringBuilder();
+
+        for (int i = n - 1; i >= 0; i--) {
+            out.append(answer[i]).append(' ');
+        }
+
+        System.out.println(out);
+    }
+
+    static class FastScanner {
+        private final InputStream in;
+        private final byte[] buffer = new byte[1 << 16];
+
+        private int ptr = 0;
+        private int len = 0;
+
+        FastScanner(InputStream in) {
+            this.in = in;
+        }
+
+        private int read() throws IOException {
+            if (ptr >= len) {
+                len = in.read(buffer);
+                ptr = 0;
+
+                if (len <= 0) {
+                    return -1;
+                }
+            }
+
+            return buffer[ptr++];
+        }
+
+        int nextInt() throws IOException {
+            int c;
+
+            do {
+                c = read();
+            } while (c <= ' ');
+
+            int sign = 1;
+
+            if (c == '-') {
+                sign = -1;
+                c = read();
+            }
+
+            int result = 0;
+
+            while (c > ' ') {
+                result = result * 10 + c - '0';
+                c = read();
+            }
+
+            return result * sign;
+        }
+    }
+}
